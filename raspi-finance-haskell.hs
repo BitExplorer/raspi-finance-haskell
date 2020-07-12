@@ -1,4 +1,6 @@
 {-# LANGUAGE OverloadedStrings,TemplateHaskell #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric  #-}
 
 --stack install aeson-casing
 import Data.Aeson
@@ -15,15 +17,32 @@ import Data.List
 import System.Directory
 import Data.Aeson.Parser
 --import Data.String.Utils
+import Database.PostgreSQL.Simple
+import Database.PostgreSQL.Simple.FromRow
+import Database.PostgreSQL.Simple.ToField
+import Database.PostgreSQL.Simple.ToRow
+import GHC.Generics (Generic)
+--import Servant
+
+
+data Book = Book
+  {
+    isbn :: String
+  , title :: String
+  , authors :: String
+  } deriving (Show, Eq, FromRow, Generic)
+
+--instance FromRow Book where
+--  fromRow = Book <$> field <*> field <*> field
 
 data Transaction = Transaction
     { guid :: String,
       description :: String,
       category    :: String,
       --transactionDate    :: UTCTime,
-      transactionDate    :: NominalDiffTime,
-      dateUpdated        :: NominalDiffTime,
-      dateAdded        :: NominalDiffTime,
+--      transactionDate    :: NominalDiffTime,
+--      dateUpdated        :: NominalDiffTime,
+--      dateAdded        :: NominalDiffTime,
       sha256 :: Maybe String,
       accountType    :: String,
       accountNameOwner    :: String,
@@ -35,65 +54,26 @@ data Transaction = Transaction
       reoccurring      :: Bool
      -- account_id      :: Maybe Integer,
      -- transaction_id     :: Maybe Integer,
-     -- account_name_owner    :: Maybe String,
-     -- date_updated        :: Maybe NominalDiffTime,
-     -- date_added        :: Maybe NominalDiffTime,
-     -- transaction_date    :: Maybe NominalDiffTime
-    } deriving (Show, Eq)
-
---data TransactionSnake = TransactionSnake
---    { guid :: String,
---      description :: String,
---      category    :: String,
---      sha256 :: Maybe String,
---      accountType    :: String,
---      notes    :: String,
---      amount      :: Double,
---      cleared      :: Integer,
---      account_id      :: Integer,
---      transaction_id     :: Integer,
---      account_name_owner    :: String,
---      date_updated        :: NominalDiffTime,
---      date_added        :: NominalDiffTime,
---      transaction_date    :: NominalDiffTime,
---      reoccurring      :: Bool
---    } deriving (Show, Eq)
+    } deriving (Show, Eq, FromRow, Generic)
 
 $(deriveJSON defaultOptions ''Transaction)
 
-snakeCaseParser = withObject "Transaction" $ \obj -> do
-   transactionDate <- obj .: "transaction_date"
-   dateAdded <- obj .: "date_added"
-   dateUpdated <- obj .: "date_updated"
-   accountNameOwner <- obj .: "account_name_owner"
-   accountType <- obj .: "account_type"
-   accountId <- obj .: "account_id"
-   transactionId <- obj .: "transaction_id"
-   guid <- obj .: "guid"
-   description <- obj .: "description"
-   category <- obj .: "category"
-   sha256 <- obj .: "sha256"
-   notes <- obj .: "notes"
-   amount <- obj .: "amount"
-   cleared <- obj .: "cleared"
-   reoccurring <- obj .: "reoccurring"
-   pure (Transaction {
-                       accountNameOwner = accountNameOwner,
-                       transactionDate = transactionDate,
-                       dateAdded = dateAdded,
-                       dateUpdated = dateUpdated,
-                       accountType = accountType,
-                       transactionId = transactionId,
-                       accountId = accountId,
-                       amount = amount,
-                       notes = notes,
-                       sha256 = sha256,
-                       category = category,
-                       description = description,
-                       guid = guid,
-                       reoccurring = reoccurring,
-                       cleared = cleared
-                       })
+
+--transaction1 :: Relation () Transaction
+--transaction1 = relation $ do
+--  a <- query account
+--  wheres $ a ! Transaction.category' `in'` values ["fuel"]
+--  return a
+
+--instance FromRow Transaction where
+--  fromRow = Transaction <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
+
+
+--instance FromRow Transaction where
+--  fromRow = Transaction{..} = [guid,accountNameOwner,notes,description,category]
+
+--instance QueryParams Transaction where
+--    renderParams Transaction{..} = [guid,accountNameOwner,notes,description,category]
 
 isRegularFileOrDirectory :: FilePath -> Bool
 isRegularFileOrDirectory f = f /= "." && f /= ".."
@@ -112,14 +92,29 @@ transactionSumAmount :: [Transaction] -> Double
 transactionSumAmount [] = 0.0
 transactionSumAmount (x:xs) =  amount x + transactionSumAmount xs
 
+
+--data App = App
+--    { _sess :: Snaplet SessionManager
+--    }
+--
+--makeLenses ''App
+--
+---- | The application's routes.
+--routes :: [(LB.ByteString, Handler App App ())]
+--routes = [ ("/",            writeText "hello")
+--         ]
+
 main :: IO ()
 main = do putStrLn "read file and load it to a structure."
 --          [file] <- getArgs
-          singleRecord <- LB.readFile "/Users/z037640/projects/raspi-finance-haskell/file.json"
-          records <- LB.readFile "/Users/z037640/projects/raspi-finance-haskell/filelist.json"
-          list <- LB.readFile "/Users/z037640/projects/raspi-finance-haskell/list.json"
-          --all <- getDirectoryContents "/Users/z037640/projects/raspi-finance-convert/json_in/.processed"
-          jsonFiles <- filter isRegularFileOrDirectory <$> getDirectoryContents "/Users/z037640/projects/raspi-finance-convert/json_in/.processed"
+          singleRecord <- LB.readFile "file.json"
+          records <- LB.readFile "filelist.json"
+          list <- LB.readFile "list.json"
+          --all <- getDirectoryContents "../raspi-finance-convert/json_in/.processed"
+          jsonFiles <- filter isRegularFileOrDirectory <$> getDirectoryContents "../raspi-finance-convert/json_in/.processed"
+
+--          conn <- connectPostgreSQL "host=localhost port=5432 connect_timeout=10 connectDatabase=finance_db"
+          conn <- connect defaultConnectInfo { connectHost = "localhost", connectDatabase = "finance_db", connectUser = "henninb", connectPassword = "monday1"}
 
           --listBySuit = [ x = "one" | x <- jsonFiles]
 
@@ -133,3 +128,13 @@ main = do putStrLn "read file and load it to a structure."
           print listOfTransactions
           --print (transactionSumAmount listOfTransactions)
           putStrLn "read file and load it to a structure."
+          mapM_ print =<< (query_ conn "SELECT 1 + 1" :: IO [Only Int])
+          --mapM_ print =<< (query conn "SELECT guid,description,category,sha256, account_type, account_name_owner FROM t_transaction WHERE guid = ? and account_name_owner = ?" ("c63dcaf1-c2b7-4d72-b2bb-8d4dafed8dbd" :: String, "usbankcash_brian" :: String) :: IO [Transaction])
+          mapM_ print =<< (query conn  "SELECT isbn,title,authors FROM books WHERE title = ? AND authors = ?" ("test" :: String, "test" :: String) :: IO [Book])
+          --mapM_ print =<< (query conn  "SELECT isbn,title,authors FROM books WHERE title = ?" (Only "test" :: String) :: IO [Book])
+--          mapM_ print =<< (query_ conn bookQuery :: IO [Book]) where bookQuery = "SELECT isbn,title,authors FROM books LIMIT 1"
+--          mapM_ print =<< (query_ conn transactionQuery :: IO [Transaction]) where transactionQuery = "SELECT guid,description,account_type,account_name_owner FROM t_transaction LIMIT 1"
+          mapM_ print =<< (query_ conn q :: IO [Only LB.ByteString]) where q = "SELECT guid FROM t_transaction LIMIT 10"
+--          mapM_ print =<< (query_ conn q :: IO [Transaction]) where q = "SELECT guid FROM t_transaction LIMIT 10"
+--          mapM_ print =<< (query_ conn q :: IO [LB.ByteString, LB.ByteString]) where q = "SELECT guid,description FROM t_transaction LIMIT 10"
+--          mapM_ print =<< (query_ conn "select guid from t_transaction" :: IO [Transaction])
