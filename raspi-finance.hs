@@ -47,7 +47,7 @@ makeLenses ''Transaction
 instance ToRow Transaction
 
 doubleIt :: Integer -> Integer
-doubleIt (ts) = ts * 2
+doubleIt ts = ts * 2
 
 instance FromRow Transaction where
   fromRow = Transaction <$>
@@ -63,8 +63,7 @@ instance FromRow Transaction where
     field <*>
     field
 
-
-
+-- (Book <$> field)
 -- works lambda function
 instance FromJSON Transaction where
   parseJSON = withObject "transaction" $ \o ->
@@ -95,7 +94,7 @@ main = do putStrLn "--- start ---"
 
           mapM_ print =<< (query conn "SELECT guid,description,category,sha256,account_type,account_name_owner,notes,cleared,account_id,transaction_id,reoccurring FROM t_transaction WHERE guid = ? and account_name_owner = ?" ("423fa3d2-d6e9-4dbf-bd39-928d284ad1a6" :: String, "chase_brian" :: String) :: IO [Transaction])
 --          test { c = "Goodbye" }
-          epoch_int <- (read <$> formatTime defaultTimeLocale "%s" <$> getCurrentTime) :: IO Int
+          epoch_int <- (read . formatTime defaultTimeLocale "%s" <$> getCurrentTime) :: IO Int
           print epoch_int
 --          round `fmap` getPOSIXTime
           putStrLn "--- separated ---"
