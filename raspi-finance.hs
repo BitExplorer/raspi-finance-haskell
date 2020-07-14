@@ -21,6 +21,7 @@ import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.FromRow
 import Database.PostgreSQL.Simple.ToField
 import Database.PostgreSQL.Simple.ToRow
+-- import Database.PostgreSQL.Simple.Statement
 import GHC.Generics (Generic)
 --import Control.Lens
 import Data.Ratio
@@ -99,4 +100,5 @@ main = do putStrLn "--- start ---"
           epoch_int <- (read . formatTime defaultTimeLocale "%s" <$> getCurrentTime) :: IO Int
           print epoch_int
 --          round `fmap` getPOSIXTime
+          let query = unlines $ ["SELECT guid from t_transaction"]
           putStrLn "--- separated ---"
