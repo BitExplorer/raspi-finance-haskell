@@ -1,6 +1,7 @@
 stack install postgresql-simple
 stack install aeson-casing
 stack install aeson
+stack install lens
 
 
 CREATE TABLE books (
