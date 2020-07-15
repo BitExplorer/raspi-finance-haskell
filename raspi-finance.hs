@@ -98,7 +98,11 @@ main = do putStrLn "--- start ---"
           putStrLn "--- separated ---"
 --          test { c = "Goodbye" }
           epoch_int <- (read . formatTime defaultTimeLocale "%s" <$> getCurrentTime) :: IO Int
-          print epoch_int
+          putStrLn (show epoch_int)
+          putStrLn "--- separated ---"
 --          round `fmap` getPOSIXTime
-          let query = unlines $ ["SELECT guid from t_transaction"]
+          -- let query = unlines $ ["SELECT guid from t_transaction"]
+          -- print =<< ( query_ conn "SELECT guid,description,category,sha256,account_type,account_name_owner,notes,cleared,account_id,transaction_id,reoccurring FROM t_transaction LIMIT 10" :: IO [Transaction] )
+          let resultSet = query_ conn "SELECT guid,description,category,sha256,account_type,account_name_owner,notes,cleared,account_id,transaction_id,reoccurring FROM t_transaction LIMIT 10" :: IO [Transaction]
+          print =<< resultSet
           putStrLn "--- separated ---"
