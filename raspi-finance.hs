@@ -31,7 +31,7 @@ data Transaction = Transaction
     { guid :: String,
       description :: String,
       category    :: String,
-      sha256 :: Maybe String,
+      sha256 :: String,
       accountType    :: String,
       accountNameOwner    :: String,
       notes    :: String,
@@ -71,7 +71,7 @@ instance FromJSON Transaction where
     Transaction <$> o .: "guid"
            <*> o .: "description"
            <*> o .: "category"
-           <*> o .:? "sha256"
+           <*> o .: "sha256"
            <*> o .: "accountType"
            <*> o .: "accountNameOwner"
            <*> o .: "notes"
