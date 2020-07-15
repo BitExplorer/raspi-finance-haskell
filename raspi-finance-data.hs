@@ -40,24 +40,27 @@ import Data.Text
 --       where
 --         unMili pico = (pico `div` 1000000000) * 1000000000
 
-newtype DateTime = MakeInteger LocalTime
 
-toDateTime :: LocalTime -> Integer
-toDateTime x = formatTime defaultTimeLocale "%s"
+newtype DateTime = MakeInteger LocalTime
+   deriving (Generic, Eq, Ord, Show, Read)
+
+-- toDateTime :: LocalTime -> Integer
+-- toDateTime x = formatTime defaultTimeLocale "%s" x
 -- epoch_int <- (read . formatTime defaultTimeLocale "%s" <$> getCurrentTime) :: IO Int
 
 -- fromInteger :: Integer -> LocalTime
--- fromInteger x = 
+-- fromInteger x =
 
-data Transaction a = Transaction String String String String String String String Integer Integer Integer Bool a a a deriving (Eq, Show)
+data Transaction a = Transaction String String String String String String String Integer Integer Integer Bool a a a deriving (Show, Eq)
 
 newtype TransactionWithoutA = TransactionWithoutA (Transaction ())
 
-newtype TransactionWithA = TransactionWithA (Transaction (LocalTime, DateTime))
+newtype TransactionWithA = TransactionWithA (Transaction (LocalTime, LocalTime, LocalTime))
 
 newtype TransactionWithOne = TransactionWithOne (Transaction LocalTime)
 
 
+data TransactionNew = TransactionNew String String String String String String String Integer Integer Integer Bool DateTime deriving (Show, Eq, Generic)
 -- newtype URL = URL { getURL :: Text } deriving (Show, Eq, Generic)
 
 makeLenses ''TransactionWithoutA
@@ -65,11 +68,12 @@ makeLenses ''TransactionWithoutA
 --instance FromRow Transaction
 -- instance ToRow TransactionWithoutA
 
-instance FromJSON TransactionWithoutA
-instance ToJSON TransactionWithoutA
+
+
+instance FromJSON TransactionNew
 --
-instance FromRow TransactionWithoutA
-instance ToRow TransactionWithoutA
+instance FromRow TransactionNew
+instance ToRow TransactionNew
 
 
 -- instance FromRow TransactionWithoutA where
@@ -114,3 +118,16 @@ toNatural x | x < 0 = error "Can't create negative naturals!"
 
 fromNatural :: Natural -> Integer
 fromNatural (MakeNatural i) = i
+
+main :: IO ()
+main = do putStrLn "--- start ---"
+          singleRecord <- LB.readFile "file.json"
+          records <- LB.readFile "filelist.json"
+          list <- LB.readFile "list.json"
+          conn <- connect defaultConnectInfo { connectHost = "localhost", connectDatabase = "finance_db", connectUser = "henninb", connectPassword = "monday1"}
+          print (decode singleRecord :: Maybe Transaction)
+          putStrLn "--- separated ---"
+          print (decode records :: Maybe [Transaction])
+          putStrLn "--- separated ---"
+          mapM_ print =<< (query_ conn "SELECT 1 + 1" :: IO [Only Int])
+          putStrLn "--- separated ---"
