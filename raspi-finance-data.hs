@@ -30,39 +30,35 @@ import Control.Lens
 -- import qualified Data.Text                       as T
 import Data.Text
 
-newtype DateTime = DateTime {getDateTime :: UTCTime}
-  deriving (Generic, Eq, Ord, Show, Read)
+-- newtype DateTime = DateTime {getDateTime :: UTCTime}
+--   deriving (Generic, Eq, Ord, Show, Read)
 
-makeDateTime :: UTCTime -> DateTime
-makeDateTime (UTCTime d s) = DateTime (UTCTime d (fixTime s))
-  where
-    fixTime = picosecondsToDiffTime . unMili . diffTimeToPicoseconds
-      where
-        unMili pico = (pico `div` 1000000000) * 1000000000
+-- makeDateTime :: UTCTime -> DateTime
+-- makeDateTime (UTCTime d s) = DateTime (UTCTime d (fixTime s))
+--   where
+--     fixTime = picosecondsToDiffTime . unMili . diffTimeToPicoseconds
+--       where
+--         unMili pico = (pico `div` 1000000000) * 1000000000
 
-data Transaction a = Transaction String String String String String String String Integer Integer Integer Bool a a deriving (Eq, Show)
+newtype DateTime = MakeInteger LocalTime
 
+toDateTime :: LocalTime -> Integer
+toDateTime x = formatTime defaultTimeLocale "%s"
+-- epoch_int <- (read . formatTime defaultTimeLocale "%s" <$> getCurrentTime) :: IO Int
 
--- newtype TransactionWithoutA = TransactionWithoutA (Transaction LocalTime)
+-- fromInteger :: Integer -> LocalTime
+-- fromInteger x = 
+
+data Transaction a = Transaction String String String String String String String Integer Integer Integer Bool a a a deriving (Eq, Show)
+
 newtype TransactionWithoutA = TransactionWithoutA (Transaction ())
-newtype TransactionWithA = TransactionWithA (Transaction (LocalTime, LocalTime))
+
+newtype TransactionWithA = TransactionWithA (Transaction (LocalTime, DateTime))
+
+newtype TransactionWithOne = TransactionWithOne (Transaction LocalTime)
 
 
 -- newtype URL = URL { getURL :: Text } deriving (Show, Eq, Generic)
--- data Transaction = Transaction
---     { guid :: String,
---       description :: String,
---       category    :: String,
---       sha256 :: String,
---       accountType    :: String,
---       accountNameOwner    :: String,
---       notes    :: String,
---       cleared   :: Integer,
---       accountId      :: Integer,
---       transactionId     :: Integer,
---       reoccurring      :: Bool
--- --      dateUpdated    ::  LocalTime -- NominalDiffTime,  LocalTime, UTCTime Integer
---     } deriving (Show, Eq, Generic, Ord)
 
 makeLenses ''TransactionWithoutA
 
@@ -105,4 +101,16 @@ instance ToRow TransactionWithoutA
 --            <*> o .: "accountId"
 --            <*> o .: "transactionId"
 --            <*> o .: "reoccurring"
+--
+--
 
+
+
+newtype Natural = MakeNatural Integer
+
+toNatural :: Integer -> Natural
+toNatural x | x < 0 = error "Can't create negative naturals!"
+            | otherwise = MakeNatural x
+
+fromNatural :: Natural -> Integer
+fromNatural (MakeNatural i) = i
