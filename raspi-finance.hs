@@ -8,6 +8,7 @@ import Data.Aeson
 import Data.Aeson.TH
 import qualified Data.ByteString.Lazy.Char8 as BL
 import Data.Time
+import Data.Typeable
 import qualified Data.Time as Time
 import qualified Data.ByteString as SB
 import qualified Data.ByteString.Lazy as LB
@@ -105,4 +106,7 @@ main = do putStrLn "--- start ---"
           -- print =<< ( query_ conn "SELECT guid,description,category,sha256,account_type,account_name_owner,notes,cleared,account_id,transaction_id,reoccurring FROM t_transaction LIMIT 10" :: IO [Transaction] )
           let resultSet = query_ conn "SELECT guid,description,category,sha256,account_type,account_name_owner,notes,cleared,account_id,transaction_id,reoccurring FROM t_transaction LIMIT 10" :: IO [Transaction]
           print =<< resultSet
+          let z = typeOf resultSet
+          print z
           putStrLn "--- separated ---"
+          -- query conn "select guid,description from t_transaction where account_name_owner in ?" $ In ["Anna", "Boris", "Carla"]
