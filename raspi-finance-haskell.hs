@@ -3,6 +3,8 @@
 {-# LANGUAGE DeriveGeneric  #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+
 --import Text.JSON.Generic
 --stack install aeson-casing
 import Data.Aeson
@@ -29,6 +31,29 @@ import GHC.Generics (Generic)
 --import Servant
 import Data.Ratio
 
+
+newtype Money = Money
+  { unMoney :: Double
+  } deriving (Show, Eq, Num)
+
+newtype ProjectId = ProjectId
+  { unProjectId :: Int
+  } deriving (Show, Eq, Num)
+
+newtype DateTime = DateTime {
+  dateTime :: LocalTime
+} deriving (Show, Eq)
+
+--data Transaction
+--  = Sale Money
+--  | Purchase Money
+--  deriving (Eq, Show)
+
+data Budget = Budget
+  { budgetIncome      :: Money
+  , budgetExpenditure :: Money
+  } deriving (Show, Eq)
+
 data Transaction = Transaction
     { guid :: String,
       description :: String,
@@ -48,6 +73,10 @@ data Transaction = Transaction
 --    } deriving (Show, FromRow, Generic)
 --    } deriving (Show, Eq, FromRow, Generic, Ord)
     } deriving (Show, Eq, Generic, Ord)
+
+
+
+
 
 -- $(deriveJSON defaultOptions ''Transaction)
 --this code works

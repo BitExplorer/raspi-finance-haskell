@@ -41,8 +41,22 @@ import Data.Text
 --         unMili pico = (pico `div` 1000000000) * 1000000000
 
 
-newtype DateTime = MakeInteger LocalTime
-   deriving (Generic, Eq, Ord, Show, Read)
+newtype Money = Money
+  { unMoney :: Double
+  } deriving (Show, Eq, Num)
+
+newtype ProjectId = ProjectId
+  { unProjectId :: Int
+  } deriving (Show, Eq, Num)
+
+newtype DateTime = DateTime {
+  dateTime :: LocalTime
+} deriving (Show, Eq)
+
+
+--newtype DateTime = MakeInteger {
+--   LocalTime
+--  } deriving (Generic, Eq, Ord, Show, Read)
 
 -- toDateTime :: LocalTime -> Integer
 -- toDateTime x = formatTime defaultTimeLocale "%s" x
@@ -51,13 +65,34 @@ newtype DateTime = MakeInteger LocalTime
 -- fromInteger :: Integer -> LocalTime
 -- fromInteger x =
 
-data Transaction a = Transaction String String String String String String String Integer Integer Integer Bool a a a deriving (Show, Eq)
+--data Transaction a = Transaction  String String String String String String String Integer Integer Integer Bool a deriving (Show, Eq)
+data Transaction = Transaction
+    { guid :: String,
+      description :: String,
+      category    :: String,
+      sha256 :: Maybe String,
+      accountType    :: String,
+      accountNameOwner    :: String,
+      notes    :: String,
+      cleared      :: Integer,
+      accountId      :: Integer,
+      transactionId     :: Integer,
+      reoccurring      :: Bool
+--      dateUpdated    ::  LocalTime -- NominalDiffTime,  LocalTime, UTCTime Integer
+--     dateAdded    ::  !Time.LocalTime, -- NominalDiffTime,  LocalTime, UTCTime
+--     transactionDate    :: Day
+     --amount      :: Rational, --Rational (doesn't work with aeson), Double (doesn't work with Postgresql)
+--    } deriving (Show, FromRow, Generic)
+--    } deriving (Show, Eq, FromRow, Generic, Ord)
+    } deriving (Show, Eq)
 
-newtype TransactionWithoutA = TransactionWithoutA (Transaction ())
 
-newtype TransactionWithA = TransactionWithA (Transaction (LocalTime, LocalTime, LocalTime))
 
-newtype TransactionWithOne = TransactionWithOne (Transaction LocalTime)
+data TransactionWithoutA = TransactionWithoutA (Transaction ()) deriving (Show, Eq)
+
+data TransactionWithA = TransactionWithA (Transaction (LocalTime, LocalTime, LocalTime)) deriving (Show, Eq)
+
+data TransactionWithOne = TransactionWithOne (Transaction LocalTime) deriving (Show, Eq)
 
 
 data TransactionNew = TransactionNew String String String String String String String Integer Integer Integer Bool DateTime deriving (Show, Eq, Generic)
